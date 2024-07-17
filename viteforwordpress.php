@@ -8,8 +8,5 @@
      * License: MIT
      */
 
-    // Load the Composer autoloader
-    require_once __DIR__ . '/vendor/autoload.php';
-
     echo "Vite for WordPress";
 ?>
