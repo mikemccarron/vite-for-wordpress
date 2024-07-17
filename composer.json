@@ -13,14 +13,15 @@
     "extra": {
         "wordpress-plugin": {
             "name": "Webpack for WordPress",
-            "description": "A WordPress plugin that listens for Vite HMR manifest.json and renders those resources in the DOM."
+            "description": "A WordPress plugin that listens for Vite HMR manifest.json and renders those resources in the DOM.",
+            "main": "dist/vite-for-wordpress.php"
         }
     },
     "license": "MIT",
     "authors": [
         {
             "name": "Mike McCarron",
-            "email": "mike@mccarron.dev"
+            "email": "mike@mikemccarron.com"
         }
     ]
 }
