@@ -11,12 +11,5 @@
     // Load the Composer autoloader
     require_once __DIR__ . '/vendor/autoload.php';
 
-    // Main class for the plugin
-    use MikeMcCarron\ViteForWordPress\Plugin;
-
-    if (class_exists('MikeMcCarron\\ViteForWordPress\\Plugin')) {
-        // Initialize the plugin
-        $plugin = new Plugin();
-        $plugin->init();
-    }
+    echo "Vite for WordPress";
 ?>
