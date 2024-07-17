@@ -1,0 +1,26 @@
+{
+    "name": "mikemccarron/vite-for-wordpress",
+    "description": "A WordPress plugin that listens for Vite HMR manifest.json and renders those resources in the DOM.",
+    "type": "wordpress-plugin",
+    "require": {
+        "php": ">=7.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "MikeMcCarron\\ViteForWordPress\\": "dist/"
+        }
+    },
+    "extra": {
+        "wordpress-plugin": {
+            "name": "Webpack for WordPress",
+            "description": "A WordPress plugin that listens for Vite HMR manifest.json and renders those resources in the DOM."
+        }
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Mike McCarron",
+            "email": "mike@mccarron.dev"
+        }
+    ]
+}
