@@ -8,55 +8,54 @@
      * License: MIT
      */
     use Roots\WPConfig\Config;
+    $isDevelopment = (WP_ENV) ? WP_ENV : false;
 
     function injectViteHMR() {
         $wpHome = Config::get('WP_HOME');
+        $cleanUrl = stripPort( $wpHome );
+
         $viteEntry = Config::get('VITE_ENTRY');
         $viteEntryDevPort = Config::get('VITE_ENTRY_DEVPORT');
 
-        $isDevelopment = WP_ENV; // This is set in lumberjack config
-
+         // This is set in lumberjack config
          if (!$wpHome || !$viteEntry) {
             echo '<!-- Missing WP_HOME or VITE_ENTRY configuration -->';
             return;
         }
 
-        $cleanUrl = stripPort( $wpHome );
+        if (!$viteEntryDevPort) {
+            echo '<!-- VITE_ENTRY_DEVPORT is not set -->';
+            return;
+        }
 
-        if ($isDevelopment=="development") {
+        $viteServer = @fsockopen('localhost', $viteEntryDevPort);
 
-            if (!$viteEntryDevPort) {
-                echo '<!-- VITE_ENTRY_DEVPORT is not set -->';
-                return;
+        if ($viteServer) {
+            if ($cleanUrl && $viteEntry) {
+                $root = $cleanUrl . ':' . $viteEntryDevPort;
+                $entry = $root . '/' . $viteEntry;
             }
 
-            $viteServer = @fsockopen('localhost', $viteEntryDevPort);
+            fclose($viteServer);
+            // Inject Vite HMR scripts
+            echo '<script type="module" src="'. $root .'/@vite/client"></script>';
 
-            if ($viteServer) {
-                if ($cleanUrl && $viteEntry) {
-                    $root = $cleanUrl . ':' . $viteEntryDevPort;
-                    $entry = $root . '/' . $viteEntry;
-                }
-
-                fclose($viteServer);
-                // Inject Vite HMR scripts
-                echo '<script type="module" src="'. $root .'/@vite/client"></script>';
-
-                if ($entry) {
-                    echo '<script type="module" src="'. $entry .'"></script>';
-                }
-            } else {
-                echo '<!-- Vite development server is not running -->';
+            if ($entry) {
+                echo '<script type="module" src="'. $entry .'"></script>';
             }
         }
-        elseif($isDevelopment=="production") {
-            // Production mode: include your built assets
-            echo '<link rel="stylesheet" href="/path/to/your/compiled-css-file.css">';
-            echo '<script type="module" src="/path/to/your/compiled-js-file.js"></script>';
+        else {
+            echo '<!-- Vite development server is not running -->';
         }
-        else{
-            echo '<!-- Vite: An invalid development value provided. -->';
-        }
+    }
+
+    if (!is_admin() && ( isset($isDevelopment) && $isDevelopment=="development") ) {
+        // Call this function in the <head> section of your HTML/PHP template
+        injectViteHMR();
+    }
+    elseif(isset($isDevelopment) && $isDevelopment=="production"){
+        // Hook into wp_enqueue_scripts to properly enqueue assets.
+        add_action('wp_enqueue_scripts', 'loadProductionAssets');
     }
 
     function stripPort($url) {
@@ -83,8 +82,52 @@
         return $baseUrl;
     }
 
+    function loadProductionAssets(){
+        // Production mode: include your built assets
 
-    // Call this function in the <head> section of your HTML/PHP template
-    injectViteHMR();
+        // Get the current theme directory.
+        $theme_dir = get_template_directory();
+        $theme_uri = get_template_directory_uri();
+
+        // Path to the Vite manifest file.
+        $manifest_path = $theme_dir . '/files/.vite/manifest.json';
+
+        // Check if the manifest file exists.
+        if (file_exists($manifest_path)) {
+            // Decode the manifest JSON.
+            $manifest = json_decode(file_get_contents($manifest_path), true);
+
+            // Ensure the manifest is a valid JSON object.
+            if (is_array($manifest)) {
+                foreach ($manifest as $entry) {
+                    if (isset($entry['file']) && str_ends_with($entry['file'], '.js')) {
+                        // Extract base filename without path or extension.
+                        $handle = sanitize_title(pathinfo($entry['file'], PATHINFO_FILENAME));
+                        wp_enqueue_script(
+                            $handle, // Unique handle.
+                            $theme_uri . '/files/' . $entry['file'],
+                            [],
+                            null,
+                            true  // Load in the footer.
+                        );
+                    }
+
+                    // Inject CSS files.
+                    if (isset($entry['css']) && is_array($entry['css'])) {
+                        foreach ($entry['css'] as $css_file) {
+                            // Extract base filename without path or extension.
+                            $handle = sanitize_title(pathinfo($css_file, PATHINFO_FILENAME));
+                            wp_enqueue_style(
+                                $handle . '-style',
+                                $theme_uri . '/files/' . $css_file, // Full URL to CSS file.
+                                [],
+                                null
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
 
 ?>
