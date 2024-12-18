@@ -11,14 +11,27 @@
     $isDevelopment = (WP_ENV) ? WP_ENV : false;
 
     function injectViteHMR() {
-        $wpHome = Config::get('WP_HOME');
-        $cleanUrl = stripPort( $wpHome );
+        if (class_exists('Roots\WPConfig\Config')) {
+            $wpHome = Config::get('WP_HOME');
+            $cleanUrl = stripPort( $wpHome );
 
-        $viteEntry = Config::get('VITE_ENTRY');
-        $viteEntryDevPort = Config::get('VITE_ENTRY_DEVPORT');
+            $viteEntry = Config::get('VITE_ENTRY');
+            $viteEntryDevPort = Config::get('VITE_ENTRY_DEVPORT');
+        }
+        elseif( class_exists('Dotenv\Dotenv') ){
+            $wpHome = $_ENV['WP_HOME'];
+            $cleanUrl = stripPort( $wpHome );
 
-         // This is set in lumberjack config
-         if (!$wpHome || !$viteEntry) {
+            $viteEntry = $_ENV['VITE_ENTRY'];
+            $viteEntryDevPort = $_ENV['VITE_ENTRY_DEVPORT'];
+        }
+        else{
+            echo "<!-- ViteJS: No compaitble enviroment variables found. -->";
+            return false;
+        }
+
+        // This is set in lumberjack config
+        if (!$wpHome || !$viteEntry) {
             echo '<!-- Missing WP_HOME or VITE_ENTRY configuration -->';
             return;
         }
