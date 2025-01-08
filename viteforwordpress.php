@@ -11,6 +11,10 @@
     $isDevelopment = (WP_ENV) ? WP_ENV : false;
 
     function injectViteHMR() {
+        if ( strpos( $_SERVER['REQUEST_URI'], '/wp-json/' ) !== false ) {
+            return false;
+        }
+
         if (class_exists('Roots\WPConfig\Config')) {
             $wpHome = Config::get('WP_HOME');
             $cleanUrl = stripPort( $wpHome );
