@@ -99,6 +99,21 @@
         return $baseUrl;
     }
 
+    function add_type_attribute($tag, $handle, $src) {
+       // Check if the URL has "?module=true"
+        if (strpos($src, '?module=true') !== false) {
+            // Remove "?module=true" from the src
+            $clean_src = remove_query_arg('module', $src);
+
+            // Modify the script tag to include type="module"
+            $tag = '<script type="module" src="' . esc_url($clean_src) . '"></script>'."\n";
+        }
+
+        return $tag;
+    }
+    add_filter('script_loader_tag', 'add_type_attribute', 10, 3);
+
+
     function loadProductionAssets(){
         // Production mode: include your built assets
 
@@ -118,11 +133,17 @@
             if (is_array($manifest)) {
                 foreach ($manifest as $entry) {
                     if (isset($entry['file']) && str_ends_with($entry['file'], '.js')) {
+
+                        $args = '';
+
+                        if (isset($entry['isDynamicEntry'])) {
+                            $args = '?module=true';
+                        }
                         // Extract base filename without path or extension.
                         $handle = sanitize_title(pathinfo($entry['file'], PATHINFO_FILENAME));
                         wp_enqueue_script(
                             $handle, // Unique handle.
-                            $theme_uri . '/files/' . $entry['file'],
+                            $theme_uri . '/files/' . $entry['file']. $args,
                             [],
                             null,
                             true  // Load in the footer.
